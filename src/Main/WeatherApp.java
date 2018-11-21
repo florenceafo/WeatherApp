@@ -6,21 +6,24 @@ import javax.xml.transform.Transformer;
 import javax.xml.transform.TransformerFactory;
 import javax.xml.transform.dom.DOMSource;
 import javax.xml.transform.stream.StreamResult;
-
 import org.w3c.dom.*;
-
 import java.io.*;
 import java.net.URL;
-
-import static java.lang.Integer.min;
 import static java.lang.Integer.parseInt;
+
 
 public class WeatherApp {
 
     private String city;
     private String country;
+    private static final String API_KEY = "f706430bae10de65bf9eacb0eeb77df9";
 
-    private static String KEY = "f706430bae10de65bf9eacb0eeb77df9";
+    //
+    private static final int MINUTE_QUART = 15;
+    private static final int MINUTE_HALF = 30;
+    private static final int MINUTE_THREE_QUART = 45;
+    private static final int MINUTE_FULL = 60;
+
 
     private WeatherApp(String city, String country) {
         this.city = city;
@@ -28,10 +31,10 @@ public class WeatherApp {
 
     }
 
-    public void getWeather() throws Exception {
+    public void getWeatherData() throws Exception {
 
-        String api = "https://api.openweathermap.org/data/2.5/forecast?q=" + this.city + "," + this.country + "&mode=xml&appid=" + KEY;
-        URL url = new URL(api);
+        String apiUrl = "https://api.openweathermap.org/data/2.5/forecast?q=" + this.city + "," + this.country + "&mode=xml&appid=" + API_KEY;
+        URL url = new URL(apiUrl);
 
         DocumentBuilderFactory dbf = DocumentBuilderFactory.newInstance();
         DocumentBuilder db = dbf.newDocumentBuilder();
@@ -93,15 +96,29 @@ public class WeatherApp {
             minutes -= 60;
         }
 
+
+        int type;
+
+        String hour = "\u25CF ";
+        String threeQuartHour = "\u25D5 ";
+        String halfHour = "\u25D1 ";
+        String quartHour = "\u25D4 ";
+
+
+
         double minuteRound = 0;
         if (minutes < 15) {
             minuteRound = 0.25;
+            type = MINUTE_QUART;
         } else if (minutes < 30) {
             minuteRound = 0.5;
+            type = MINUTE_HALF;
         } else if (minutes < 45) {
             minuteRound = 0.75;
+            type = MINUTE_THREE_QUART;
         } else {
             minuteRound = 1;
+            type = MINUTE_FULL;
         }
 
         hoursDayLight = hours + minuteRound;
@@ -109,7 +126,32 @@ public class WeatherApp {
 
         System.out.println("daylight: " + hours + ":" + minutes);
 
-        
+
+
+        String displayDayLight = "";
+
+        for (int i = 0; i < hours; i++) {
+            displayDayLight += hour;
+        }
+
+        switch (type) {
+            case MINUTE_QUART:
+                displayDayLight += quartHour;
+                break;
+            case MINUTE_HALF:
+                displayDayLight += halfHour;
+                break;
+            case MINUTE_THREE_QUART:
+                displayDayLight += threeQuartHour;
+                break;
+            case MINUTE_FULL:
+                displayDayLight += hour;
+                break;
+            default:
+                break;
+
+        }
+        System.out.println(displayDayLight);
 
     }
 
@@ -119,10 +161,12 @@ public class WeatherApp {
             String city = "Gothenburg";
             String country = "se";
             WeatherApp weather = new WeatherApp(city, country);
-            weather.getWeather();
+            weather.getWeatherData();
         } catch (Exception e) {
 
         }
+
+
 
 
     }
