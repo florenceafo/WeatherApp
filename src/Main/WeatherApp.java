@@ -12,6 +12,9 @@ import org.w3c.dom.*;
 import java.io.*;
 import java.net.URL;
 
+import static java.lang.Integer.min;
+import static java.lang.Integer.parseInt;
+
 public class WeatherApp {
 
     private String city;
@@ -25,9 +28,9 @@ public class WeatherApp {
 
     }
 
-    public void getWeather() throws Exception{
+    public void getWeather() throws Exception {
 
-        String api = "https://api.openweathermap.org/data/2.5/forecast?q=" + this.city  +"," + this.country + "&mode=xml&appid=" + KEY;
+        String api = "https://api.openweathermap.org/data/2.5/forecast?q=" + this.city + "," + this.country + "&mode=xml&appid=" + KEY;
         URL url = new URL(api);
 
         DocumentBuilderFactory dbf = DocumentBuilderFactory.newInstance();
@@ -59,17 +62,54 @@ public class WeatherApp {
 
         // Get the current weather
         NodeList nodeList = document.getElementsByTagName("sun");
-        System.out.println(nodeList.item(0).getAttributes().getNamedItem("rise").getNodeValue());
 
-        for (int i = 0; i < nodeList.getLength(); i++) {
-            Node node = nodeList.item(i);
-            if (rootNode.getNodeType() == Node.ELEMENT_NODE) {
+        int sunRiseHour = 0;
+        int sunRiseMinute = 0;
+        int sunSetHour = 0;
+        int sunSetMinute = 0;
+        String sunRiseData = nodeList.item(0).getAttributes().getNamedItem("rise").getNodeValue();
+        String sunSetData = nodeList.item(0).getAttributes().getNamedItem("set").getNodeValue();
+        int sunRiseDataT = sunRiseData.indexOf('T');
 
-                Element element = (Element) node;
-                System.out.println(element.getElementsByTagName("name").item(0).getTextContent());
-            }
+        sunRiseHour = parseInt(sunRiseData.substring(sunRiseDataT + 1, sunRiseDataT + 3));
+        sunRiseMinute = parseInt(sunRiseData.substring(sunRiseDataT + 4, sunRiseDataT + 6));
+
+        int sunSetDataT = sunSetData.indexOf('T');
+
+        sunSetHour = parseInt(sunSetData.substring(sunSetDataT + 1, sunSetDataT + 3));
+        sunSetMinute = parseInt(sunSetData.substring(sunSetDataT + 4, sunSetDataT + 6));
+
+        System.out.println(sunRiseHour);
+        System.out.println(sunRiseMinute);
+        System.out.println(sunSetHour);
+        System.out.println(sunSetMinute);
+
+        double hoursDayLight = 0.0;
+
+        int hours = sunSetHour - (sunRiseHour + 1);
+        int minutes = sunSetMinute + (60 - sunRiseMinute);
+        if (minutes >= 60) {
+            hours++;
+            minutes -= 60;
         }
 
+        double minuteRound = 0;
+        if (minutes < 15) {
+            minuteRound = 0.25;
+        } else if (minutes < 30) {
+            minuteRound = 0.5;
+        } else if (minutes < 45) {
+            minuteRound = 0.75;
+        } else {
+            minuteRound = 1;
+        }
+
+        hoursDayLight = hours + minuteRound;
+        System.out.println(hoursDayLight);
+
+        System.out.println("daylight: " + hours + ":" + minutes);
+
+        
 
     }
 
@@ -83,7 +123,6 @@ public class WeatherApp {
         } catch (Exception e) {
 
         }
-
 
 
     }
