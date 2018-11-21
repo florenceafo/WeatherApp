@@ -31,30 +31,35 @@ public class WeatherApp {
 
     }
 
+    // Builds the document builder factory
+    public DocumentBuilder buildFactory() throws Exception{
+        DocumentBuilderFactory documentBuilderFactory = DocumentBuilderFactory.newInstance();
+        DocumentBuilder documentBuilder = documentBuilderFactory.newDocumentBuilder();
+        return documentBuilder;
+    }
+
     public void getWeatherData() throws Exception {
 
+        // Creates URL using parameters city, country and api key
         String apiUrl = "https://api.openweathermap.org/data/2.5/forecast?q=" + this.city + "," + this.country + "&mode=xml&appid=" + API_KEY;
         URL url = new URL(apiUrl);
 
-        DocumentBuilderFactory dbf = DocumentBuilderFactory.newInstance();
-        DocumentBuilder db = dbf.newDocumentBuilder();
-        Document doc = db.parse(url.openStream());
+        // Builds the document, read contents of the url with openStream()
+        Document doc = buildFactory().parse(url.openStream());
 
-        // Write the data to an xml file
-        DOMSource source = new DOMSource(doc);
+        // Write the data to an xml file plus transformation
+        DOMSource sourceInput = new DOMSource(doc);
         FileWriter writer = new FileWriter(new File("weather.xml"));
-        StreamResult result = new StreamResult(writer);
-
+        // Holds the transformed data
+        StreamResult resultData = new StreamResult(writer);
+        // Transforms the data t
         TransformerFactory transformerFactory = TransformerFactory.newInstance();
+        //Transform source to result
         Transformer transformer = transformerFactory.newTransformer();
-        transformer.transform(source, result);
-
-        // Get document builder
-        DocumentBuilderFactory factory = DocumentBuilderFactory.newInstance();
-        DocumentBuilder builder = factory.newDocumentBuilder();
+        transformer.transform(sourceInput, resultData);
 
         // Build document
-        Document document = builder.parse(new File("weather.xml"));
+        Document document = buildFactory().parse(new File("weather.xml"));
 
         // Normalise the XML structure
         document.getDocumentElement().normalize();
