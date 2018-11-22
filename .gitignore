@@ -1,4 +1,5 @@
 WeatherApp.class
 .idea/
 *.iml
-.xml
+weather.xml
+out/
