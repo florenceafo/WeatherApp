@@ -1,4 +1,4 @@
-package weatherApp;
+package weatherapp;
 
 public class Main {
 
@@ -12,7 +12,7 @@ public class Main {
 
         } catch (Exception e) {
             e.getMessage();
-        }   
+        }
 
     }
 }
