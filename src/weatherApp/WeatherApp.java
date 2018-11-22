@@ -1,4 +1,4 @@
-package Main;
+package weatherApp;
 
 import javax.xml.parsers.DocumentBuilder;
 import javax.xml.parsers.DocumentBuilderFactory;
@@ -11,24 +11,72 @@ import java.io.*;
 import java.net.URL;
 import static java.lang.Integer.parseInt;
 
-
 public class WeatherApp {
 
     private String city;
     private String country;
+    private int actualHoursDayLight;
+    private int actualMinutesDaylight;
+    private int sunRiseHour;
+    private int sunRiseMinute;
+    private int sunSetHour;
+    private int sunSetMinute;
+
+    // Daylight hours are rounded to nearest quarter of an hour, this determines how it is displayed in console
+    private String minuteQuartType;
+
+    // Harvey Balls unicode symbols to visualise time
+    private static final String HOUR_SYMBOL = "\u25CF ";
+    private static final String THREE_QUARTER_HOUR_SYMBOL = "\u25D5 ";
+    private static final String HALF_HOUR_SYMBOL = "\u25D1 ";
+    private static final String QUARTER_HOUR_SYMBOL = "\u25D4 ";
+
+    // Key needed to get data from the OpenWeatherMaps API
     private static final String API_KEY = "f706430bae10de65bf9eacb0eeb77df9";
 
-    //
+    // Categories, for rounding remaining minutes
     private static final int MINUTE_QUART = 15;
     private static final int MINUTE_HALF = 30;
     private static final int MINUTE_THREE_QUART = 45;
     private static final int MINUTE_FULL = 60;
 
 
-    private WeatherApp(String city, String country) {
+    public WeatherApp(String city, String country) {
         this.city = city;
         this.country = country;
+        actualHoursDayLight = 0;
+        actualMinutesDaylight = 0;
+        sunRiseHour = 0;
+        sunRiseMinute = 0;
+        sunSetHour = 0;
+        sunSetMinute = 0;
+        minuteQuartType = "";
+    }
 
+    public String toString(int roundMinute) {
+
+        String visualDaylight = "";
+
+        for (int i = 0; i < actualHoursDayLight; i++) {
+            visualDaylight += HOUR_SYMBOL;
+        }
+
+        switch (roundMinute) {
+            case MINUTE_QUART:
+                visualDaylight += QUARTER_HOUR_SYMBOL;
+                break;
+            case MINUTE_HALF:
+                visualDaylight += HALF_HOUR_SYMBOL;
+                        break;
+            case MINUTE_THREE_QUART:
+                visualDaylight += THREE_QUARTER_HOUR_SYMBOL;
+                break;
+            case MINUTE_FULL:
+                visualDaylight += HOUR_SYMBOL;
+                break;
+        }
+
+        return visualDaylight;
     }
 
     // Builds the document builder factory
@@ -38,7 +86,8 @@ public class WeatherApp {
         return documentBuilder;
     }
 
-    public void getWeatherData() throws Exception {
+
+    public Document saveWeatherData() throws Exception {
 
         // Creates URL using parameters city, country and api key
         String apiUrl = "https://api.openweathermap.org/data/2.5/forecast?q=" + this.city + "," + this.country + "&mode=xml&appid=" + API_KEY;
@@ -52,7 +101,7 @@ public class WeatherApp {
         FileWriter writer = new FileWriter(new File("weather.xml"));
         // Holds the transformed data
         StreamResult resultData = new StreamResult(writer);
-        // Transforms the data t
+        // Transforms the DOM object to the XML file
         TransformerFactory transformerFactory = TransformerFactory.newInstance();
         //Transform source to result
         Transformer transformer = transformerFactory.newTransformer();
@@ -61,6 +110,10 @@ public class WeatherApp {
         // Build document
         Document document = buildFactory().parse(new File("weather.xml"));
 
+        return document;
+    }
+
+    public int parseWeatherFile(Document document) {
         // Normalise the XML structure
         document.getDocumentElement().normalize();
 
@@ -71,108 +124,43 @@ public class WeatherApp {
         // Get the current weather
         NodeList nodeList = document.getElementsByTagName("sun");
 
-        int sunRiseHour = 0;
-        int sunRiseMinute = 0;
-        int sunSetHour = 0;
-        int sunSetMinute = 0;
+        // Parse file to get data related to sun rise and sun set
         String sunRiseData = nodeList.item(0).getAttributes().getNamedItem("rise").getNodeValue();
         String sunSetData = nodeList.item(0).getAttributes().getNamedItem("set").getNodeValue();
-        int sunRiseDataT = sunRiseData.indexOf('T');
 
+        // Extract the hour and minute of sun rise
+        int sunRiseDataT = sunRiseData.indexOf('T');
         sunRiseHour = parseInt(sunRiseData.substring(sunRiseDataT + 1, sunRiseDataT + 3));
         sunRiseMinute = parseInt(sunRiseData.substring(sunRiseDataT + 4, sunRiseDataT + 6));
 
+        // Extract the hour and minute of sun set
         int sunSetDataT = sunSetData.indexOf('T');
-
         sunSetHour = parseInt(sunSetData.substring(sunSetDataT + 1, sunSetDataT + 3));
         sunSetMinute = parseInt(sunSetData.substring(sunSetDataT + 4, sunSetDataT + 6));
 
-        System.out.println(sunRiseHour);
-        System.out.println(sunRiseMinute);
-        System.out.println(sunSetHour);
-        System.out.println(sunSetMinute);
-
-        double hoursDayLight = 0.0;
-
-        int hours = sunSetHour - (sunRiseHour + 1);
-        int minutes = sunSetMinute + (60 - sunRiseMinute);
-        if (minutes >= 60) {
-            hours++;
-            minutes -= 60;
+        // Calculates the actual hours and minutes of daylight
+        actualHoursDayLight = sunSetHour - (sunRiseHour + 1);
+        actualMinutesDaylight = sunSetMinute + (60 - sunRiseMinute);
+        if (actualMinutesDaylight >= 60) {
+            actualHoursDayLight++;
+            actualMinutesDaylight -= 60;
         }
 
+        System.out.println("Today, there will be " + actualHoursDayLight + ":" + actualMinutesDaylight + " hours of daylight");
 
-        int type;
-
-        String hour = "\u25CF ";
-        String threeQuartHour = "\u25D5 ";
-        String halfHour = "\u25D1 ";
-        String quartHour = "\u25D4 ";
-
-
-
-        double minuteRound = 0;
-        if (minutes < 15) {
-            minuteRound = 0.25;
-            type = MINUTE_QUART;
-        } else if (minutes < 30) {
-            minuteRound = 0.5;
-            type = MINUTE_HALF;
-        } else if (minutes < 45) {
-            minuteRound = 0.75;
-            type = MINUTE_THREE_QUART;
-        } else {
-            minuteRound = 1;
-            type = MINUTE_FULL;
-        }
-
-        hoursDayLight = hours + minuteRound;
-        System.out.println(hoursDayLight);
-
-        System.out.println("daylight: " + hours + ":" + minutes);
-
-
-
-        String displayDayLight = "";
-
-        for (int i = 0; i < hours; i++) {
-            displayDayLight += hour;
-        }
-
-        switch (type) {
-            case MINUTE_QUART:
-                displayDayLight += quartHour;
-                break;
-            case MINUTE_HALF:
-                displayDayLight += halfHour;
-                break;
-            case MINUTE_THREE_QUART:
-                displayDayLight += threeQuartHour;
-                break;
-            case MINUTE_FULL:
-                displayDayLight += hour;
-                break;
-            default:
-                break;
-
-        }
-        System.out.println(displayDayLight);
+        // Round minutes to nearest quarter hour
+        int roundMinute = (int) ((Math.round(actualMinutesDaylight/60.0*4)/4f)*60);
+        
+        return roundMinute;
 
     }
 
-    public static void main(String[] args) {
 
-        try {
-            String city = "Gothenburg";
-            String country = "se";
-            WeatherApp weather = new WeatherApp(city, country);
-            weather.getWeatherData();
-        } catch (Exception e) {
+    public void getDaylightHours () throws Exception {
+        Document document = saveWeatherData();
+        int roundMinute = parseWeatherFile(document);
 
-        }
-
-
-
-
+        System.out.println(toString(roundMinute));
     }
+
 }
