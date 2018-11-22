@@ -11,7 +11,7 @@ public class Main {
             weather.getDaylightHours();
 
         } catch (Exception e) {
-
+            e.getMessage();
         }
 
     }

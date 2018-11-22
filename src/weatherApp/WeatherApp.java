@@ -22,9 +22,6 @@ public class WeatherApp {
     private int sunSetHour;
     private int sunSetMinute;
 
-    // Daylight hours are rounded to nearest quarter of an hour, this determines how it is displayed in console
-    private String minuteQuartType;
-
     // Harvey Balls unicode symbols to visualise time
     private static final String HOUR_SYMBOL = "\u25CF ";
     private static final String THREE_QUARTER_HOUR_SYMBOL = "\u25D5 ";
@@ -42,6 +39,7 @@ public class WeatherApp {
 
 
     public WeatherApp(String city, String country) {
+
         this.city = city;
         this.country = country;
         actualHoursDayLight = 0;
@@ -50,17 +48,23 @@ public class WeatherApp {
         sunRiseMinute = 0;
         sunSetHour = 0;
         sunSetMinute = 0;
-        minuteQuartType = "";
     }
 
+    public String getCity() {
+        return city;
+    }
+
+    // Produces the visualisation of the daylight hours
     public String toString(int roundMinute) {
 
         String visualDaylight = "";
 
+        // Full hours
         for (int i = 0; i < actualHoursDayLight; i++) {
             visualDaylight += HOUR_SYMBOL;
         }
 
+        // Remainder
         switch (roundMinute) {
             case MINUTE_QUART:
                 visualDaylight += QUARTER_HOUR_SYMBOL;
@@ -78,14 +82,6 @@ public class WeatherApp {
 
         return visualDaylight;
     }
-
-    // Builds the document builder factory
-    public DocumentBuilder buildFactory() throws Exception{
-        DocumentBuilderFactory documentBuilderFactory = DocumentBuilderFactory.newInstance();
-        DocumentBuilder documentBuilder = documentBuilderFactory.newDocumentBuilder();
-        return documentBuilder;
-    }
-
 
     public Document saveWeatherData() throws Exception {
 
@@ -119,7 +115,6 @@ public class WeatherApp {
 
         // Get the root node
         Element rootNode = document.getDocumentElement();
-        System.out.println(rootNode.getNodeName());
 
         // Get the current weather
         NodeList nodeList = document.getElementsByTagName("sun");
@@ -146,20 +141,29 @@ public class WeatherApp {
             actualMinutesDaylight -= 60;
         }
 
-        System.out.println("Today, there will be " + actualHoursDayLight + ":" + actualMinutesDaylight + " hours of daylight");
-
+        System.out.println();
+        System.out.println("Today in " + this.getCity() + ", there will be " + actualHoursDayLight + ":" + actualMinutesDaylight + " hours of daylight");
+        System.out.println();
         // Round minutes to nearest quarter hour
         int roundMinute = (int) ((Math.round(actualMinutesDaylight/60.0*4)/4f)*60);
-        
         return roundMinute;
 
     }
 
+    // Creates the document builder factory
+    public DocumentBuilder buildFactory() throws Exception{
+        DocumentBuilderFactory documentBuilderFactory = DocumentBuilderFactory.newInstance();
+        DocumentBuilder documentBuilder = documentBuilderFactory.newDocumentBuilder();
+        return documentBuilder;
+    }
 
     public void getDaylightHours () throws Exception {
+        // Access the api data and save it to a new xml file
         Document document = saveWeatherData();
+        // Parses the weather data, extracts the total daylight time
+        // Returns the remainder after the last full hour, rounded to the nearest 15 minutes
         int roundMinute = parseWeatherFile(document);
-
+        // Uses the number of whole hours plus the rounded quarter to print a visualisation to the console
         System.out.println(toString(roundMinute));
     }
 
