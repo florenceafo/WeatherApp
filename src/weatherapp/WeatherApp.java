@@ -31,6 +31,15 @@ public class WeatherApp {
     // Key needed to get data from the OpenWeatherMaps API
     private static final String API_KEY = "f706430bae10de65bf9eacb0eeb77df9";
 
+    // Used when parsing the weather.xml file and extracting the hours and minutes of the sun rise and sun set
+    private static final int ITEM_NO = 0; // The value is in the first position after the node
+    private static final int HOUR_START = 1;
+    private static final int HOUR_END = 3;
+    private static final int MINUTE_START = 4;
+    private static final int MINUTE_END = 6;
+
+
+
     // Categories, for rounding remaining minutes
     private static final int MINUTE_QUART = 15;
     private static final int MINUTE_HALF = 30;
@@ -120,32 +129,32 @@ public class WeatherApp {
         NodeList nodeList = document.getElementsByTagName("sun");
 
         // Parse file to get data related to sun rise and sun set
-        String sunRiseData = nodeList.item(0).getAttributes().getNamedItem("rise").getNodeValue();
-        String sunSetData = nodeList.item(0).getAttributes().getNamedItem("set").getNodeValue();
+        String sunRiseData = nodeList.item(ITEM_NO).getAttributes().getNamedItem("rise").getNodeValue();
+        String sunSetData = nodeList.item(ITEM_NO).getAttributes().getNamedItem("set").getNodeValue();
 
         // Extract the hour and minute of sun rise
         int sunRiseDataT = sunRiseData.indexOf('T');
-        sunRiseHour = parseInt(sunRiseData.substring(sunRiseDataT + 1, sunRiseDataT + 3));
-        sunRiseMinute = parseInt(sunRiseData.substring(sunRiseDataT + 4, sunRiseDataT + 6));
+        sunRiseHour = parseInt(sunRiseData.substring(sunRiseDataT + HOUR_START, sunRiseDataT + HOUR_END));
+        sunRiseMinute = parseInt(sunRiseData.substring(sunRiseDataT + MINUTE_START, sunRiseDataT + MINUTE_END));
 
         // Extract the hour and minute of sun set
         int sunSetDataT = sunSetData.indexOf('T');
-        sunSetHour = parseInt(sunSetData.substring(sunSetDataT + 1, sunSetDataT + 3));
-        sunSetMinute = parseInt(sunSetData.substring(sunSetDataT + 4, sunSetDataT + 6));
+        sunSetHour = parseInt(sunSetData.substring(sunSetDataT + HOUR_START, sunSetDataT + HOUR_END));
+        sunSetMinute = parseInt(sunSetData.substring(sunSetDataT + MINUTE_START, sunSetDataT + MINUTE_END));
 
         // Calculates the actual hours and minutes of daylight
         actualHoursDayLight = sunSetHour - (sunRiseHour + 1);
-        actualMinutesDaylight = sunSetMinute + (60 - sunRiseMinute);
-        if (actualMinutesDaylight >= 60) {
+        actualMinutesDaylight = sunSetMinute + (MINUTE_FULL - sunRiseMinute);
+        if (actualMinutesDaylight >= MINUTE_FULL) {
             actualHoursDayLight++;
-            actualMinutesDaylight -= 60;
+            actualMinutesDaylight -= MINUTE_FULL;
         }
 
         System.out.println();
         System.out.println("Today in " + this.getCity() + ", there will be " + actualHoursDayLight + ":" + actualMinutesDaylight + " hours of daylight");
         System.out.println();
         // Round minutes to nearest quarter hour
-        int roundMinute = (int) ((Math.round(actualMinutesDaylight/60.0*4)/4f)*60);
+        int roundMinute = (int) ((Math.round(actualMinutesDaylight/60.0*4)/4f)*MINUTE_FULL);
         return roundMinute;
 
     }
